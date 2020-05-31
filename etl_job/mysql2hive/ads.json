@@ -1,0 +1,51 @@
+{
+  "job": {
+      "setting": {
+          "errorLimit": {
+              "percentage": 0.02,
+              "record": 0
+          },
+      "speed": {
+            "channel": 8
+          }
+      },
+    "content": [
+      {
+          "reader": {
+            "name": "mysqlreader",
+            "parameter": {
+                "column": ["*"],
+                "connection": [
+                  {
+                    "jdbcUrl": ["jdbc:mysql://${Y_ip}:${Y_post}/${Y_db}"],
+                    "table": ["${Y_table}"]
+                  }
+              ],
+              "username": "${Y_user}",
+              "password": "${Y_password}"
+            }
+          },
+        "writer": {
+          "name": "hdfswriter",
+          "parameter": {
+            "column": [${M_json}],
+            "compress": "SNAPPY",
+            "defaultFS": "hdfs://${M_hdfs_ip}:9000",
+            "fieldDelimiter": ",",
+            "fileName": "${M_table}",
+            "fileType": "${M_type}",
+            "path": "${M_hive_warehouse}/${M_db}.db/${M_table}",
+            "writeMode": "append"
+          }
+        }
+      }
+    ]
+  }
+}
+
+
+
+
+
+
+
