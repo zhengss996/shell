@@ -176,4 +176,3 @@ echo "DataX执行开始时间: " ${start_tm}
 echo "DataX执行结束时间: " ${end_tm}
 echo "最终耗时: " ${val} "秒"
 
-
