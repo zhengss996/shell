@@ -1,4 +1,0 @@
-#my.job
-type=command
-command=bash /home/root/insight/datax/job/etl-job/t_bse_customer_ods/t_bse_customer_ods_starter.sh
-~                                                                                                

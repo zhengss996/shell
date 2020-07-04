@@ -17,7 +17,7 @@
                 "column": ["*"],
                 "connection": [
                   {
-                    "jdbcUrl": ["jdbc:mysql://${Y_ip}:${Y_post}/${Y_db}"],
+                    "jdbcUrl": ["jdbc:mysql://${Y_ip}/${Y_db}"],
                     "table": ["${Y_table}"]
                   }
               ],
@@ -30,8 +30,8 @@
           "parameter": {
             "column": [${M_json}],
             "compress": "SNAPPY",
-            "defaultFS": "hdfs://${M_hdfs_ip}:9000",
-            "fieldDelimiter": ",",
+            "defaultFS": "hdfs://${M_hdfs_ip}:8020",
+            "fieldDelimiter": "\u0001",
             "fileName": "${M_table}",
             "fileType": "${M_type}",
             "path": "${M_hive_warehouse}/${M_db}.db/${M_table}",

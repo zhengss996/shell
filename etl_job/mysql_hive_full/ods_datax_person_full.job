@@ -1,0 +1,5 @@
+#my.job
+type=command
+command=bash /opt/insight3.0/datax/job/etl_job_full/ods_tms_t_opr_waybill_full/ods_tms_t_opr_waybill_full_starter.sh
+failure.emails=zhengsongsong@zeyihuoyun.com
+~                                                                                                

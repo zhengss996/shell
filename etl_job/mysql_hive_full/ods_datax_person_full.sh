@@ -23,7 +23,6 @@ echo "${14} 配置："  'M_hdfs_ip='${M_hdfs_ip} 'M_user='${M_user} 'M_hadoop_ad
 
 
 
-
 # 获取json语句
 create_json="
 SELECT
@@ -33,15 +32,20 @@ FROM (
 	column_name,
 	case
 		when data_type = 'datetime' then 'TIMESTAMP'
+		when data_type = 'timestamp' then 'TIMESTAMP'
+		when data_type = 'date' then 'DATE'
 		when data_type = 'text' then 'STRING'
+		when data_type = 'longtext' then 'STRING'
 		when data_type = 'decimal' then 'FLOAT'
+		when data_type = 'double' then 'DOUBLE'
 		when data_type = 'varchar' then 'VARCHAR'
 		when data_type = 'int' then 'INT'
 		when data_type = 'bigint' then 'BIGINT'
-		when data_type = 'tinyint' then 'INT'
+		when data_type = 'tinyint' then 'TINYINT'
+		when data_type = 'char' then 'STRING'
 		else '' end as data_type
 	FROM information_schema.columns
-	WHERE table_schema= 'datax' AND table_name = 'person'
+	WHERE table_schema= \"${Y_db}\" AND table_name = \"${Y_table}\"
 	) a
 "
 echo "****** JSON *** ONE ***获取 JSON 的 SQL 语句：" 
@@ -72,16 +76,21 @@ select
   column_name,
 	column_comment,
 	case
-    when column_type like 'datetime' then 'TIMESTAMP'
-    when column_type like 'int%' then 'INT'
-    when column_type like 'decimal%' then 'FLOAT'
-    when column_type like 'varchar%' then column_type
-    when column_type like 'bigint%' then 'bigint'
-		when column_type like 'tinyint%' then 'INT'
+		when column_type like 'datetime' then 'TIMESTAMP'
+		when column_type like 'timestamp%' then 'TIMESTAMP'
+		when column_type like 'date%' then 'date'
+		when column_type like 'decimal%' then 'FLOAT'
+		when column_type like 'double%' then 'double'
+		when column_type like 'varchar%' then column_type
+		when column_type like 'int%' then 'INT'
+		when column_type like 'bigint%' then 'bigint'
+		when column_type like 'tinyint%' then 'TINYINT'
 		when column_type like 'text%' then 'STRING'
+		when column_type like 'longtext%' then 'STRING'
+		when column_type like 'char%' then 'STRING'
 		else '' end as column_type
 FROM information_schema.columns
-WHERE table_schema= 'datax' AND table_name = 'person'
+WHERE table_schema= \"${Y_db}\" AND table_name = \"${Y_table}\"
 ) a
 "
 echo "****** HIVE *** ONE ***获取 HIVE 建表字段的 SQL 语句：" 
@@ -109,40 +118,43 @@ use ${M_db};
 CREATE TABLE IF NOT EXISTS ${M_table}(
 ${createsql}
 )
+clustered by(id) into 10 buckets
 ROW FORMAT SERDE
   'org.apache.hadoop.hive.ql.io.orc.OrcSerde'
 WITH SERDEPROPERTIES (
-  'field.delim'=',',
-  'serialization.format'=',')
+  'field.delim'='\u0001',
+  'serialization.format'='\u0001')
 STORED AS INPUTFORMAT
   'org.apache.hadoop.hive.ql.io.orc.OrcInputFormat'
 OUTPUTFORMAT
   'org.apache.hadoop.hive.ql.io.orc.OrcOutputFormat';
+truncate table ${M_table};
 "
 echo "****** HIVE *** FOUR ***拼接 HIVE 的建表语句  如果已经纯在，清空表结构：" 
 echo ${create_hive}
+echo ${create_hive} > ${M_addr}/${M_table}.sql
 echo ""
 
 # 远程登录集群，建表
 ssh ${M_user}@${M_hive_ip} > /dev/null 2>&1 << eeooff
 hive -e "${create_hive}" > /dev/null 2>&1
 eeooff
-echo "*** HIVE *** FIVE ***表创建成功  OR  或者已经纯在"
+echo "*** HIVE *** FIVE ***表创建成功  OR  或者已经纯在, 并且清空表结构"
 echo ""
 
-# 远程连接集群，删除hdfs文件（清空表数据）重新全量的写入
-f_cmd="ssh ${M_user}@${M_hdfs_ip} \"${M_hadoop_address}/hadoop fs -rmr ${M_hive_warehouse}/${M_db}.db/${M_table}/* 2>&1\""
-echo "####### HDFS ##### 删除hdfs执行语句:"
-echo ${f_cmd}
-echo ""
-
-if eval ${f_cmd}; then
-	echo "========== 删除文件成功========================"
-else
-	echo "========== 删除文件失败  OR 表内无文件 ========"
-fi
-echo "###### HDFS ###### 删除 HDFS 上文件成功！！！"
-echo ""
+# # 远程连接集群，删除hdfs文件（清空表数据）重新全量的写入
+# f_cmd="ssh ${M_user}@${M_hdfs_ip} \"${M_hadoop_address}/hadoop fs -rmr ${M_hive_warehouse}/${M_db}.db/${M_table}/* 2>&1\""
+# echo "####### HDFS ##### 删除hdfs执行语句:"
+# echo ${f_cmd}
+# echo ""
+# 
+# if eval ${f_cmd}; then
+# 	echo "========== 删除文件成功========================"
+# else
+# 	echo "========== 删除文件失败  OR 表内无文件 ========"
+# fi
+# echo "###### HDFS ###### 删除 HDFS 上文件成功！！！"
+# echo ""
 
 
 # datax执行开始时间
@@ -150,7 +162,7 @@ start_tm=$(date  +"%Y-%m-%d %H:%M:%S")
 s_tm=`date +%s`
 
 # 运行datax抽数任务
-python ./../../bin/datax.py ${M_addr}/ads.json -p "\
+python /root/datax/bin/datax.py ${M_addr}/mysql_hive.json -p "\
 -DY_ip='${Y_ip}' -DY_post='${Y_post}' -DY_db='${Y_db}' -DY_table='${Y_table}' -DY_user='${Y_user}' -DY_password='${Y_password}' \
 -DM_hive_ip='${M_hive_ip}' -DM_hdfs_ip='${M_hdfs_ip}' -DM_db='${M_db}' -DM_table='${M_table}' -DM_type='${M_type}' \
 -DM_json='${createjson}' -DM_hive_warehouse='${M_hive_warehouse}'"
