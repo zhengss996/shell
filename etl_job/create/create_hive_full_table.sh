@@ -1,4 +1,10 @@
 #!/bin/bash
+
+# 说明：
+# 此脚本用于创建hive表
+# 通过读取mysql的元数据库得到mysql表的字段名和字段类型，通过case when 映射得到hive的字段类型，最终组合得到hive的建表语句，远程登录集群建表
+
+
 Y_ip="192.168.174.132"
 Y_post="3306"
 Y_user="root"
@@ -12,7 +18,7 @@ project_path=$(cd `dirname $0`; pwd)
 for x in ` awk "{print $1}" ./table_name.txt `
 do
   Y_table=$x
-  M_table="ods_tms_${Y_table}_full"
+  M_table="ods_${Y_db}_${Y_table}_full"
 
   # 获取hive的建表语句
   create_sql="
@@ -69,8 +75,8 @@ EOF`"
   ROW FORMAT SERDE
     'org.apache.hadoop.hive.ql.io.orc.OrcSerde'
   WITH SERDEPROPERTIES (
-    'field.delim'='\001',
-    'serialization.format'='\001')
+    'field.delim'='\u0001',
+    'serialization.format'='\u0001')
   STORED AS INPUTFORMAT
     'org.apache.hadoop.hive.ql.io.orc.OrcInputFormat'
   OUTPUTFORMAT
@@ -80,7 +86,7 @@ EOF`"
   "
   echo "****** HIVE *** FOUR ***拼接 HIVE 的建表语句  如果已经纯在，清空表结构："
   echo ${create_hive}
-  echo ${create_hive} > ${project_path}/tms_ods_full/${Y_table}.sql
+  echo ${create_hive} > ${project_path}/table/${Y_table}.sql
   echo ""
 
   # 远程登录集群，建表

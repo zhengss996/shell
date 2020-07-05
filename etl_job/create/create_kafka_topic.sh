@@ -1,7 +1,7 @@
 #!/bin/bash
 
-M_user="root"
-M_hive_ip="172.16.182.172"
+M_user="hadoop"
+M_hive_ip="192.168.174.160"
 
 count=0
 project_path=$(cd `dirname $0`; pwd)

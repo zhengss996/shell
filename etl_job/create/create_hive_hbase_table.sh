@@ -1,12 +1,20 @@
 #!/bin/bash
-Y_ip="rr-bp1ex9u909eh66g4d.mysql.rds.aliyuncs.com"
+
+# 说明：
+# 此脚本用于创建hive和hbase的关联表
+# 通过读取mysql的元数据库得到mysql表的字段名和字段类型，通过case when 映射得到hive的字段类型，最终组合得到hive的建表语句，远程登录集群建表
+# hbase的命名空间和hive的库名保持一致
+
+
+Y_ip="192.168.174.132"
 Y_post="3306"
-Y_user="tms_read"
-Y_password="Tms_read"
-Y_db="auth"
-M_db="ods_increment"
-M_user="root"
-M_hive_ip="172.16.182.178"
+Y_user="root"
+Y_password="root"
+Y_db="datax"
+M_db="datax"
+M_user="hadoop"
+M_hive_ip="192.168.174.160"
+
 project_path=$(cd `dirname $0`; pwd)
 count=0
 
@@ -15,7 +23,8 @@ do
   count=`expr ${count} + 1`
   Y_table=$x
   M_table="ods_${Y_db}_${Y_table}_incr"
-  # 获取hive的建表语句
+
+  # 获取hive的建表字段语句
   create_sql="
   SELECT
   concat(a.column_name, ' ', a.column_type, \",\") as createsql
@@ -100,7 +109,7 @@ EOF`"
   
   echo "****** HIVE *** FOUR ***拼接 HIVE 的建表语句  如果已经纯在，清空表结构："
   echo ${create_hive}
-  echo ${create_hive} > ${project_path}/tms_ods_incr/${Y_table}.sql
+  echo ${create_hive} > ${project_path}/table/${Y_table}.sql
   echo ""
 
   # 远程登录集群，建表
