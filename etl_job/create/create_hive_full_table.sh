@@ -1,17 +1,19 @@
 #!/bin/bash
-Y_ip="rr-bp1ex9u909eh66g4d.mysql.rds.aliyuncs.com"
+Y_ip="192.168.174.132"
 Y_post="3306"
-Y_user="tms_read"
-Y_password="Tms_read"
-Y_db="tms"
-M_db="ods_full"
-M_user="root"
-M_hive_ip="172.16.182.178"
+Y_user="root"
+Y_password="root"
+Y_db="datax"
+M_db="datax"
+M_user="hadoop"
+M_hive_ip="192.168.174.160"
 project_path=$(cd `dirname $0`; pwd)
+
 for x in ` awk "{print $1}" ./table_name.txt `
 do
   Y_table=$x
   M_table="ods_tms_${Y_table}_full"
+
   # 获取hive的建表语句
   create_sql="
   SELECT
